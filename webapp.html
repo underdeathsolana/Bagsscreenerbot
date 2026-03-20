@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Bags.fm Scanner</title>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--border:#30363d;--green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--text:#e6edf3;--muted:#8b949e}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;padding-bottom:80px}
+  header{background:linear-gradient(135deg,#1a1f2e,#0d1117);border-bottom:1px solid var(--border);padding:16px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}
+  .logo{width:40px;height:40px;background:linear-gradient(135deg,#6e40c9,#3fb950);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .title h1{font-size:17px;font-weight:700;color:var(--text)}
+  .title p{font-size:12px;color:var(--muted)}
+  .live-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 2s infinite;margin-left:auto}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  nav{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--card);overflow-x:auto}
+  nav button{flex:1;min-width:80px;padding:12px 8px;background:none;border:none;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+  nav button.active{color:var(--blue);border-bottom-color:var(--blue)}
+  .tab{display:none;padding:12px}
+  .tab.active{display:block}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;position:relative}
+  .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+  .token-name{font-weight:700;font-size:15px}
+  .token-sym{font-size:12px;color:var(--muted);background:#21262d;padding:2px 8px;border-radius:20px}
+  .badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600}
+  .badge-new{background:#1d4d2a;color:var(--green)}
+  .badge-pump{background:#3d1f1f;color:var(--red)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+  .stat{background:#0d1117;border-radius:8px;padding:8px 10px}
+  .stat label{font-size:10px;color:var(--muted);display:block;margin-bottom:2px}
+  .stat value{font-size:13px;font-weight:700}
+  .up{color:var(--green)}.down{color:var(--red)}.neutral{color:var(--muted)}
+  .addr{font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:10px;background:#0d1117;padding:6px 8px;border-radius:6px;display:flex;align-items:center;justify-content:space-between}
+  .copy-btn{background:none;border:none;color:var(--blue);cursor:pointer;font-size:12px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{flex:1;min-width:80px;padding:9px 12px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;text-align:center;display:inline-block}
+  .btn-primary{background:linear-gradient(135deg,#6e40c9,#3fb950);color:#fff}
+  .btn-secondary{background:#21262d;color:var(--text)}
+  .btn-danger{background:#3d1f1f;color:var(--red)}
+  .risk-high{color:var(--red)}.risk-med{color:var(--yellow)}.risk-low{color:var(--green)}
+  .change-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .change-bar{flex:1;height:4px;background:#21262d;border-radius:4px;margin:0 10px;overflow:hidden}
+  .change-fill{height:100%;border-radius:4px}
+  .empty{text-align:center;padding:40px 20px;color:var(--muted)}
+  .empty .icon{font-size:48px;margin-bottom:12px}
+  .filter-bar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+  .filter-bar input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px}
+  .filter-bar input::placeholder{color:var(--muted)}
+  footer{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+  footer span{font-size:11px;color:var(--muted)}
+  .footer-btn{background:linear-gradient(135deg,#6e40c9,#3fb950);color:#fff;border:none;border-radius:20px;padding:8px 20px;font-weight:700;font-size:13px;cursor:pointer;text-decoration:none}
+  .medal{font-size:18px;margin-right:4px}
+  .lb-row{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+  .lb-info{flex:1;margin:0 10px}
+  .lb-change{font-weight:700;font-size:14px}
+  .spinner{display:flex;justify-content:center;padding:30px}<br>  .spin{width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stats-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+  .stats-card .num{font-size:28px;font-weight:800;color:var(--blue)}
+  .stats-card .label{font-size:11px;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🎯</div>
+  <div class="title"><h1>Bags.fm Scanner</h1><p>Real-Time Solana Token Radar</p></div>
+  <div class="live-dot" title="Live"></div>
+</header>
+
+<nav>
+  <button class="active" onclick="showTab('new',this)">🆕 New</button>
+  <button onclick="showTab('trending',this)">🔥 Trending</button>
+  <button onclick="showTab('leaderboard',this)">🏆 Gainers</button>
+  <button onclick="showTab('stats',this)">📊 Stats</button>
+  <button onclick="showTab('help',this)">❓ Help</button>
+</nav>
+
+<div id="new" class="tab active">
+  <div class="filter-bar">
+    <input id="search" placeholder="🔍 Search token name or symbol..." oninput="filterTokens()">
+  </div>
+  <div id="new-list"><div class="spinner"><div class="spin"></div></div></div>
+</div>
+
+<div id="trending" class="tab">
+  <div id="trending-list"><div class="spinner"><div class="spin"></div></div></div>
+</div>
+
+<div id="leaderboard" class="tab">
+  <div id="lb-list"><div class="spinner"><div class="spin"></div></div></div>
+</div>
+
+<div id="stats" class="tab">
+  <div id="stats-content"><div class="spinner"><div class="spin"></div></div></div>
+</div>
+
+<div id="help" class="tab">
+  <div class="card">
+    <div style="font-size:24px;margin-bottom:10px">📖 How to Use</div>
+    <p style="color:var(--muted);font-size:13px;line-height:1.6">
+      <strong style="color:var(--text)">🆕 New Tokens</strong><br>
+      Real-time new token listings from Bags.fm. Filtered by minimum liquidity &amp; volume.<br><br>
+      <strong style="color:var(--text)">🔥 Trending</strong><br>
+      Tokens with the highest trading volume right now.<br><br>
+      <strong style="color:var(--text)">🏆 Top Gainers</strong><br>
+      Tokens with the biggest 24h price increase.<br><br>
+      <strong style="color:var(--text)">💸 Buy Button</strong><br>
+      Opens Bags.fm trading page with our referral link.<br><br>
+      <strong style="color:var(--text)">📋 Copy CA</strong><br>
+      Copies the contract address to clipboard.<br><br>
+      <strong style="color:var(--text)">🛡 RugCheck</strong><br>
+      Opens RugCheck safety analysis for the token.<br><br>
+      <strong style="color:var(--text)">⚠️ Risk Levels</strong><br>
+      🔴 HIGH — Liq &lt; $5K &nbsp;|&nbsp; 🟡 MED — Liq &lt; $20K &nbsp;|&nbsp; 🟢 LOW — Liq ≥ $20K
+    </p>
+  </div>
+  <div class="card">
+    <div style="font-size:15px;font-weight:700;margin-bottom:8px">📱 Connect With Us</div>
+    <a href="https://t.me/underdeathsol" style="display:block;color:var(--blue);margin-bottom:6px;font-size:14px">📡 @underdeathsol (Telegram Channel)</a>
+    <a href="https://x.com/lilfid12" style="display:block;color:var(--blue);margin-bottom:6px;font-size:14px">🐦 @lilfid12 (Twitter/X)</a>
+    <a href="https://bags.fm/$LILFID12" style="display:block;color:var(--green);font-size:14px">🛒 Trade on Bags.fm</a>
+  </div>
+  <div style="text-align:center;padding:16px;color:var(--muted);font-size:11px">
+    Powered by Bags.fm · Built for @underdeathsol<br>
+    <a href="https://bags.fm" style="color:var(--blue)">bags.fm</a>
+  </div>
+</div>
+
+<footer>
+  <span>📱 @underdeathsol</span>
+  <a href="https://bags.fm/$LILFID12" class="footer-btn">💸 Trade on Bags.fm</a>
+</footer>
+
+<script>
+const REF="https://bags.fm/$LILFID12";
+let allTokens=[], trendTokens=[], lbTokens=[];
+let loaded={new:false,trending:false,leaderboard:false,stats:false};
+
+function fmtPrice(p){p=parseFloat(p||0);if(!p)return"$0.00";if(p<0.000001)return"$"+p.toFixed(10);if(p<0.001)return"$"+p.toFixed(8);if(p<1)return"$"+p.toFixed(6);return"$"+p.toFixed(4)}
+function fmtUsd(n){n=parseFloat(n||0);if(n>=1e6)return"$"+(n/1e6).toFixed(2)+"M";if(n>=1e3)return"$"+(n/1e3).toFixed(1)+"K";return"$"+n.toFixed(2)}
+function fmtChange(p){p=parseFloat(p||0);let c=p>=0?"up":"down",s=p>=0?"🟢 +":"🔴 ";return`<span class="${c}">${s}${Math.abs(p).toFixed(2)}%</span>`}
+function fmtAge(ts){if(!ts)return"just now";let d=new Date(typeof ts==="number"&&ts>1e12?ts:ts*1000);let mins=Math.floor((Date.now()-d)/60000);if(mins<1)return"just now";if(mins<60)return mins+"m ago";let h=Math.floor(mins/60);if(h<24)return h+"h ago";return Math.floor(h/24)+"d ago"}
+function risk(liq,vol){liq=parseFloat(liq||0);if(liq<5000)return'<span class="risk-high">🔴 HIGH RISK</span>';if(liq<20000)return'<span class="risk-med">🟡 MED RISK</span>';return'<span class="risk-low">🟢 LOW RISK</span>'}
+function shortAddr(a){return a?a.slice(0,6)+"..."+a.slice(-4):""}
+function copyCA(addr){navigator.clipboard.writeText(addr).then(()=>{showToast("📋 CA Copied!")}).catch(()=>{prompt("Copy CA:",addr)})}
+function showToast(msg){let t=document.createElement("div");t.innerText=msg;t.style.cssText="position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#3fb950;color:#000;padding:8px 18px;border-radius:20px;font-weight:700;font-size:13px;z-index:999;animation:fadeIn .3s";document.body.appendChild(t);setTimeout(()=>t.remove(),2000)}
+
+function tokenCard(t){
+  let addr=t.address||t.mint||"";
+  let name=(t.name||"Unknown").slice(0,20);
+  let sym=t.symbol||"???";
+  let price=t.priceUsd||0;
+  let liq=(t.liquidity&&t.liquidity.usd)||t.liquidityUsd||0;
+  let vol=(t.volume&&t.volume.h24)||t.volume24h||0;
+  let mcap=t.marketCap||t.fdv||0;
+  let ch1=(t.priceChange&&t.priceChange.h1)||0;
+  let ch24=(t.priceChange&&t.priceChange.h24)||t.priceChange24h||0;
+  let created=t.createdAt||t.created_at||t.pairCreatedAt||"";
+  let holders=t.holders||t.holderCount||"—";
+  let buyUrl=`https://bags.fm/t/${addr}?ref=LILFID12`;
+  return`<div class="card">
+    <div class="card-header">
+      <div>
+        <div class="token-name">${name} <span class="token-sym">$${sym}</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px">${risk(liq,vol)} · 🕐 ${fmtAge(created)}</div>
+      </div>
+      <span class="badge badge-new">NEW</span>
+    </div>
+    <div class="addr"><span>${shortAddr(addr)}</span><button class="copy-btn" onclick="copyCA('${addr}')">📋 Copy</button></div>
+    <div class="grid">
+      <div class="stat"><label>💵 Price</label><value>${fmtPrice(price)}</value></div>
+      <div class="stat"><label>💎 MCap</label><value>${fmtUsd(mcap)}</value></div>
+      <div class="stat"><label>💧 Liquidity</label><value>${fmtUsd(liq)}</value></div>
+      <div class="stat"><label>📊 Vol 24H</label><value>${fmtUsd(vol)}</value></div>
+      <div class="stat"><label>📈 1H Change</label><value>${fmtChange(ch1)}</value></div>
+      <div class="stat"><label>📈 24H Change</label><value>${fmtChange(ch24)}</value></div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">👥 Holders: ${holders}</div>
+    <div class="actions">
+      <a href="${buyUrl}" class="btn btn-primary" target="_blank">💸 BUY NOW</a>
+      <a href="https://bags.fm/t/${addr}" class="btn btn-secondary" target="_blank">📊 Chart</a>
+      <a href="https://dexscreener.com/solana/${addr}" class="btn btn-secondary" target="_blank">🦅 Dex</a>
+      <a href="https://rugcheck.xyz/tokens/${addr}" class="btn btn-danger" target="_blank">🛡 RugCheck</a>
+    </div>
+  </div>`}
+
+async function loadNew(){
+  if(loaded.new)return;loaded.new=true;
+  try{
+    let r=await fetch("https://api.dexscreener.com/token-profiles/latest/v1");
+    let data=await r.json();
+    allTokens=(Array.isArray(data)?data:[]).filter(t=>t.chainId==="solana").slice(0,30).map(t=>({
+      address:t.tokenAddress||t.address||"",name:t.name||t.description||"?",symbol:t.symbol||"?",
+      priceUsd:t.priceUsd||0,liquidity:{usd:t.liquidity||0},volume:{h24:t.volume24h||0},
+      marketCap:t.marketCap||0,priceChange:{h1:0,h24:t.priceChange24h||0},
+      createdAt:t.createdAt||"",holders:t.holders||"—"
+    }));
+    renderNew();
+  }catch(e){document.getElementById("new-list").innerHTML='<div class="empty"><div class="icon">⚠️</div><p>Could not load tokens.<br>Please try again.</p></div>'}
+}
+function renderNew(){
+  let q=(document.getElementById("search").value||"").toLowerCase();
+  let filtered=allTokens.filter(t=>!q||(t.name||"").toLowerCase().includes(q)||(t.symbol||"").toLowerCase().includes(q));
+  document.getElementById("new-list").innerHTML=filtered.length?filtered.map(tokenCard).join(""):'<div class="empty"><div class="icon">🔍</div><p>No tokens match your search.</p></div>'
+}
+function filterTokens(){loaded.new=true;renderNew()}
+
+async function loadTrending(){
+  if(loaded.trending)return;loaded.trending=true;
+  try{
+    let r=await fetch("https://api.dexscreener.com/token-boosts/top/v1");
+    let data=await r.json();
+    trendTokens=(Array.isArray(data)?data:[]).filter(t=>t.chainId==="solana").slice(0,15).map(t=>({
+      address:t.tokenAddress||t.address||"",name:t.name||t.description||"?",symbol:t.symbol||"?",
+      priceUsd:t.priceUsd||0,liquidity:{usd:t.liquidity||0},volume:{h24:t.volume24h||0},
+      marketCap:t.marketCap||0,priceChange:{h1:0,h24:t.priceChange24h||0},
+      createdAt:t.createdAt||"",holders:t.holders||"—"
+    }));
+    document.getElementById("trending-list").innerHTML=trendTokens.length?trendTokens.map(tokenCard).join(""):'<div class="empty"><div class="icon">🔥</div><p>No trending tokens at the moment.</p></div>'
+  }catch(e){document.getElementById("trending-list").innerHTML='<div class="empty"><div class="icon">⚠️</div><p>Could not load trending tokens.</p></div>'}
+}
+
+async function loadLB(){
+  if(loaded.leaderboard)return;loaded.leaderboard=true;
+  try{
+    let r=await fetch("https://api.dexscreener.com/latest/dex/search?q=solana&chainIds=solana");
+    let data=await r.json();
+    let pairs=(data.pairs||[]).sort((a,b)=>parseFloat(b.priceChange?.h24||0)-parseFloat(a.priceChange?.h24||0)).slice(0,10);
+    let medals=["🥇","🥈","🥉","4️⃣","5️⃣","6️⃣","7️⃣","8️⃣","9️⃣","🔟"];
+    let html=pairs.map((p,i)=>{
+      let base=p.baseToken||{};let addr=base.address||"";
+      let ch24=parseFloat(p.priceChange?.h24||0);
+      let price=parseFloat(p.priceUsd||0);
+      let vol=parseFloat(p.volume?.h24||0);
+      return`<div class="lb-row">
+        <span class="medal">${medals[i]}</span>
+        <div class="lb-info">
+          <div style="font-weight:700">${(base.name||"?").slice(0,14)} <span style="color:var(--muted);font-size:12px">$${base.symbol||"?"}</span></div>
+          <div style="font-size:11px;color:var(--muted)">Vol: ${fmtUsd(vol)}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="lb-change ${ch24>=0?'up':'down'}">${ch24>=0?'+':''}${ch24.toFixed(2)}%</div>
+          <div style="font-size:12px;color:var(--muted)">${fmtPrice(price)}</div>
+          <a href="https://bags.fm/t/${addr}?ref=LILFID12" style="font-size:11px;color:var(--green);text-decoration:none" target="_blank">💸 Buy</a>
+        </div>
+      </div>`}).join("");
+    document.getElementById("lb-list").innerHTML=html||'<div class="empty"><div class="icon">🏆</div><p>No data available.</p></div>'
+  }catch(e){document.getElementById("lb-list").innerHTML='<div class="empty"><div class="icon">⚠️</div><p>Could not load leaderboard.</p></div>'}
+}
+
+function loadStats(){
+  if(loaded.stats)return;loaded.stats=true;
+  document.getElementById("stats-content").innerHTML=`
+    <div class="stats-grid" style="margin-bottom:12px">
+      <div class="stats-card"><div class="num">30s</div><div class="label">Scan Interval</div></div>
+      <div class="stats-card"><div class="num">$1K</div><div class="label">Min Liquidity</div></div>
+      <div class="stats-card"><div class="num">+30%</div><div class="label">Pump Alert Threshold</div></div>
+      <div class="stats-card"><div class="num">3x</div><div class="label">Volume Spike Trigger</div></div>
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:700;margin-bottom:10px">📡 Data Sources</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8">
+        ✅ Bags.fm API (primary)<br>
+        ✅ DexScreener API (fallback)<br>
+        ✅ Token Profiles Feed<br>
+        ✅ Token Boosts Feed
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:700;margin-bottom:10px">🔔 Alert Types</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.9">
+        🆕 New Token Detected<br>
+        🚀 Pump Alert (+30%)<br>
+        📊 Volume Spike (3x)<br>
+        🏆 Hourly Leaderboard<br>
+        🎯 Watchlist Target Hit
+      </div>
+    </div>
+    <div style="text-align:center;padding:16px;color:var(--muted);font-size:11px">
+      Bot by <a href="https://t.me/underdeathsol" style="color:var(--blue)">@underdeathsol</a> ·
+      <a href="https://bags.fm" style="color:var(--blue)">bags.fm</a>
+    </div>`
+}
+
+function showTab(id,btn){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  btn.classList.add("active");
+  if(id==="new")loadNew();
+  if(id==="trending")loadTrending();
+  if(id==="leaderboard")loadLB();
+  if(id==="stats")loadStats();
+}
+
+// Auto-refresh every 60s
+setInterval(()=>{loaded.new=false;loaded.trending=false;loadNew();if(document.getElementById("trending").classList.contains("active"))loadTrending()},60000);
+
+loadNew();
+</script>
+</body>
+</html>
